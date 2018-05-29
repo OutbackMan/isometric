@@ -3,6 +3,9 @@
 
 #include <stddef.h>
 
+#define I_COMMON_MIN(x, y) \
+	((x) < (y) ? (x) : (y))
+
 void i_common_exit(int exit_status);
 
 void* i_common_xmalloc(size_t num_bytes);
