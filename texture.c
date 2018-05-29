@@ -60,3 +60,10 @@ void i_texture_destroy(I_Texture* texture)
 	SDL_DestroyTexture(texture->texture);	
 	free(texture);
 }
+
+void i_texture_render_xy_clip(I_Texture* texture, )
+{
+	SDL_assert(texture != NULL);	
+
+
+}

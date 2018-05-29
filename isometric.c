@@ -94,6 +94,8 @@ void i_isometric_execute(
 			unsigned max_update_steps
 )
 {
+	SDL_assert(isometric != NULL);
+
 	const float DESIRED_FRAME_TIME_MS = 1000.0f / desired_fps;
 
 	float total_delta_time;

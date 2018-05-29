@@ -13,6 +13,8 @@ static void events_handle_quit(I_Isometric* isometric)
 
 static void events_handle_window(I_Isometric* isometric, SDL_WindowEvent* window_event)
 {
+	SDL_assert(window_event != NULL);
+
 	return;
 }
 
@@ -22,6 +24,8 @@ static void events_handle_window(I_Isometric* isometric, SDL_WindowEvent* window
 	|| keyboard_event->keysym.sym == SDLK_ESCAPE)
 static void events_handle_key_down(I_Isometric* isometric, SDL_KeyboardEvent* keyboard_event)
 {
+	SDL_assert(keyboard_event != NULL);
+
 	if (QUIT_KEYS_ARE_DOWN(keyboard_event)) {
 		isometric->want_to_run = false;
 	} else {
@@ -32,26 +36,36 @@ static void events_handle_key_down(I_Isometric* isometric, SDL_KeyboardEvent* ke
 
 static void events_handle_key_up(I_Isometric* isometric, SDL_KeyboardEvent* keyboard_event)
 {
+	SDL_assert(keyboard_event != NULL);
+
 	return;
 }
 
 static void events_handle_mouse_down(I_Isometric* isometric, SDL_MouseButtonEvent* mouse_button_event)
 {
+	SDL_assert(mouse_button_event != NULL);
+
 	return;
 }
 
 static void events_handle_mouse_up(I_Isometric* isometric, SDL_MouseButtonEvent* mouse_button_event)
 {
+	SDL_assert(mouse_button_event != NULL);
+
 	return;
 }
 
 static void events_handle_mouse_motion(I_Isometric* isometric, SDL_MouseMotionEvent* mouse_motion_event)
 {
+	SDL_assert(mouse_motion_event != NULL);
+
 	return;
 }
 
 void i_events__execute(I_Isometric* isometric)
 {
+	SDL_assert(isometric != NULL);
+
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
