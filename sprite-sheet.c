@@ -1,5 +1,10 @@
 #include "sprite-sheet.h"
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+
+#include "common.h"
+
 I_SpriteSheet* i_sprite_sheet_create(
 				SDL_Renderer* renderer, 
 				const char* file_name, 
@@ -87,20 +92,9 @@ void i_sprite_sheet_draw(
 
 }
 
-// car.h
-// enum { MERCEDES, HOLDEN, ... };
 /*
-void draw_sprite(x, y, index, centre, angle, flip) {
-	int x_index = sprite_sheet->sprite_width * index;
-	SDL_Rect src = { x_index, 0, sprite_sheet->sprite_width, sprite_sheet->sprite_height };
-	SDL_Rect dst = { x, y, tile_width, tile_height };
-
-	SDL_RenderCopyEx(renderer, sprite_sheet, &src, &dst, angle, centre, flip);
-}
-				int x, 
-				int y,
-				double angle,
-				SDL_Point* centre,
-				SDL_Rect* clip_rect,
-				SDL_RendererFlip flip_type
-*/
+ car.h
+ enum { I_SPRITESHEET_INDEX_CAR_MERCEDES, ... };
+ enum { I_SPRITESHEET_DIRECTION_CAR_MERCEDES_LEFT = 90 };
+ car-64-64-5.png
+*.

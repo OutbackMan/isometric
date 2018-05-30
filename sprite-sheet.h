@@ -1,6 +1,8 @@
 #ifndef __sprite_sheet_h__
 #define __sprite_sheet_h__
 
+#include <SDL2/SDL.h>
+
 typedef struct {
 	SDL_Texture* sprite_sheet;
 	unsigned sprite_width;
@@ -27,7 +29,7 @@ void i_sprite_sheet_draw(
 			int y, 
 			double draw_angle,
 			SDL_Point* draw_centre,
-			SDL_RendererFlip draw_filp_type
+			SDL_RendererFlip draw_flip_type
 );
 
 #endif
