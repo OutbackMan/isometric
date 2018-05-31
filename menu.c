@@ -4,10 +4,11 @@
 
 bool asking_for_restart_confirmation = false;
 int current_menu_choice;
+int time_of_quit_confirmation;
 
 enum {
-	MENU_CHOICE_RESUME,
-	MENU_CHOICE_RESTART
+	MENU_INDEX_RESUME,
+	MENU_INDEX_RESTART
 };
 
 typedef struct {
@@ -28,6 +29,19 @@ menu_events()
 		menu_advance_choice(DOWN);		
 	} else if (event.keysym.sym == SDLK_UP) {
 		menu_advance_choice(UP);		
+	} else if (event.keysym.sym == SDLK_ENTER) {
+		switch (current_menu_choice) {
+		case MENU_QUIT:
+			if (asking_for_quit_confirmation) {
+				exit(0);
+			} else {
+				asking_for_quit_confirmation = true;		
+			}
+			break;
+		case MENU_RESUME;
+			isometric->view_id = ISOMETRIC;
+			break;
+		}		
 	}
 }
 
@@ -42,10 +56,25 @@ menu_advance_choice(int delta)
 	}
 }
 
-draw_text(index)
+draw_text()
 {
 	if (index == current_menu_choice) {
-		font_colour == { 255, 255, 255, 255 };
+		font_colour = { 0xff, 0x3e, 0x22, 0xff };
+
+		white = { 0xff, 0xff, 0xff, 0xff };
+
+		interpolation_factor = cos(SDL_GetTicks() * 2); // strobe (2 affects speed)
+		interpolation_factor *= interpolation_factor; // have positive
+		base = .4;
+		range = .6;
+		// when apply maths to form a fade out pattern, consider the graph shape that is made
+		interpolation_factor = base + range * interpolation_factor;
+
+		bg_font_colour = lerp(font_colour, white, interpolation_factor);
+
+		bg_font_offset = menu->choice_font->height / 40;
+
+		menu_index_resume = draw_font(+offset, -offset, bg_font_colour);
 	}
 }
 
@@ -76,4 +105,10 @@ menu_render_choices(centre_x, cursor_y)
 
 	draw_text(centre_x, cursor_y, "CHOICE 4");
 	cursor_y -= stride;
+
+	// when move off a confirmation, reset text message
+	if (current_menu_choice != MENU_QUIT) {
+		asking_for_quit_confirmation = false;	
+	}
 }
+
