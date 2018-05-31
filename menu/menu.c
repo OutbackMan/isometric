@@ -1,6 +1,20 @@
-// SDLK_Escape;
+/*
+void handle_escape()
+{
+	if (isometric->view == GAME) {
+		isometric->view = MENU;
+		isometric->menu_manager->current_menu_page = &main;
+	} else if (menu_manager->current_page == LOAD) {
+		menu_manager->current_page = MAIN;		
+	} else {
+		isometric->view = GAME;
+		isometric->menu_manager->current_menu_page = NULL;
+	}
+}
+	if (event.keysym.sym == SDLK_ESCAPE) {
+	}
+*/
 // void toggle_menu() { if (isometric->view == GAME) isometric->view = MENU; }
-// 41:00
 
 bool asking_for_restart_confirmation = false;
 int current_menu_choice;
@@ -12,8 +26,13 @@ enum {
 };
 
 typedef struct {
-	int choice_2_value;	
-} MenuState;
+	int current_option;
+	int num_options;
+} MenuPage;
+
+MenuPage* main;
+MenuPage* load;
+MenuPage* current_menu_page;
 
 Menu* menu_create()
 {
@@ -41,6 +60,8 @@ menu_events()
 		case MENU_RESUME;
 			isometric->view_id = ISOMETRIC;
 			break;
+		case MENU_LOAD:
+			switch_to_menu(load);
 		}		
 	}
 }
@@ -85,10 +106,10 @@ menu_render()
 
 	draw_text(centre_x, cursor_y, "TITLE", MENU_CHOICE_TITLE);	
 
-	menu_render_choices();
+	menu_render_page(menu->current_page);
 }
 
-menu_render_choices(centre_x, cursor_y)
+menu_render_page(current_page, centre_x, cursor_y)
 {
 	int stride = 1.7f * menu->choices_font->height;
 	cursor_y -= stride;
@@ -107,7 +128,7 @@ menu_render_choices(centre_x, cursor_y)
 	cursor_y -= stride;
 
 	// when move off a confirmation, reset text message
-	if (current_menu_choice != MENU_QUIT) {
+	if (current_menu_page->current_menu_choice != MENU_QUIT) {
 		asking_for_quit_confirmation = false;	
 	}
 }
