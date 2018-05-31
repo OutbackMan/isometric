@@ -66,17 +66,6 @@ menu_events()
 	}
 }
 
-menu_advance_choice(int delta)
-{
-	current_menu_choice += delta;	
-
-	if (current_menu_choice < 0) {
-		current_menu_choice += MENU_NUM_CHOICES;	
-	} else if (current_menu_choice > MENU_NUM_CHOICES) {
-		current_menu_choice = 0;		
-	}
-}
-
 draw_text()
 {
 	if (index == current_menu_choice) {

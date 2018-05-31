@@ -1,20 +1,24 @@
-#ifndef __map_h__
-#define __map_h__
-
-#include <SDL2/SDL.h>
-
-#include <stddef.h>
-
 typedef struct {
-	int tile_index;
-	bool is_solid;
-} I_Map__TileDescriptor;
+	void** keys;
+	void** values;
+	size_t length;
+	size_t capacity;
+} Map;
 
-typedef struct {
-	I_SpriteSheet* tile_sheet;	
-	size_t num_tiles_x;
-	size_t num_tiles_y;
-	I_Map__TileDescriptor* tile_descriptors;
-} I_Map;
+uint64_t ptr_hash(void* ptr)
+{
+	return (uint64_t)(ptr);
+}
 
-#endif
+void* map_get(Map* map, const void* key)
+{
+	SDL_assert(key != NULL); // NULL is our sentinel value
+	if (map->length == 0) return NULL;
+
+	uint64_t hash = ptr_hash(key);	
+}
+
+Map* map_create()
+{
+	
+}
