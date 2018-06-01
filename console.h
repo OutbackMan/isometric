@@ -161,6 +161,7 @@ static int get_current_height(Console* console, I_Renderer* renderer)
 	return console->current_render_height_fraction * renderer->logical_height;
 }
 
+// ----------------------------------------------------------------------------
 
 typedef struct {
 	const char* string;
@@ -170,6 +171,88 @@ typedef struct {
 } TextInput;
 // TTF_RenderUTF8_Blended
 
+const char text[8000]; // markedtext ???
+const int cursor = 0;
+SDL_Rect text_rect, marked_rect;
+
+void init_input()
+{
+	text_rect = {
+		.x = 100,
+		.y = 100,
+		.w = 300,
+		.h = 50
+	};
+	marked_rect = text_rect;
+
+	text[0] = 0;
+	marked_text[0] = 0;
+
+	SDL_StartTextInput(); // so we can capture events. SDL_StopTextInput()
+}
+
+void draw()
+{
+	SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+	
+	// draw input area
+	SDL_RenderFillRect(renderer, &text_rect);
+
+	// draw recieved text
+	SDL_Surface* input_text_surface = TTF_RenderUTF8_Blended(font, text, colour);
+	SDL_Texture* input_text_texture = SDL_CreateTextureFromSurface(renderer, input_text_surface);
+	SDL_Rect input_text = {
+		.x = text_rect.x,
+		.y = text_rect.y,
+		.w = input_text_surface->w,
+		.h = input_text_surface->h
+	};
+	SDL_RenderCopy(renderer, input_text_texture, NULL, &input_text);
+
+	int input_text_width;
+	int input_text_height;
+	TTF_SizeUTF8(font, text, &input_text_width, &input_text_height);
+}
+
+size_t utf8_char_block_length(char* ch)
+{
+	const char GET_2_MSB_MASK = 0xc0;
+	const char SINGLE_BLOCK_INDICATOR = 0x80;
+
+	for (size_t char_index = 0, block_count = 0; ch[char_index] != '\0'; ++char_index) {
+		if (ch[char_index] & GET_2_MSB_MASK != SINGLE_BLOCK_INDICATOR) {
+			++block_count;		
+		} 
+	}
+
+	return block_count;
+}
+
+char* utf8_char_next(char* ch)
+{
+	size_t block_length = utf8_char_block_length(ch);	
+
+	if (block_length == 0) {
+		return 0;
+	} else {
+		for (size_t block_index = 0; block_index < block_length; ++block_index) {
+			++ch;			
+		}		
+	}
+
+	return ch;
+}
+
+char* utf8_char_advance(char* ch, size_t delta)
+{
+	for (size_t utf8_char_index = 0; utf8_char_index < delta && ch[utf8_char_index] != '\0'; ++utf8_char_index) {
+		ch = utf8_next_char(ch);
+	}
+
+	return ch;
+}
+
+// ----------------------------------------------------------------------------
 
 #endif
 
@@ -195,5 +278,7 @@ void events(SDL_Event* event)
 	case SDL_TEXTINPUT:
 		const char* text = event->text.text;
 	case SDL_TEXTEDITING:
+	case SDLK_UP:
+		// control cursor position
 	}
 }
