@@ -1,6 +1,8 @@
 #ifndef __console_h__
 #define __console_h__
 
+// 2:00:00
+
 typedef enum {
 	CLOSED,
 	OPEN_SMALL,
@@ -16,10 +18,11 @@ typedef struct {
 	SDL_Colour* report_bg_colour;
 	SDL_Colour* report_text_colour;
 
-	float max_render_height_fraction;	
-	float current_render_height_fraction = 0.0f; // open_t
-	float desired_render_height_fraction = 0.0f; // open_t_target
-	float render_height_delta = 1.0f; // dopen_dt
+	float current_render_height_fraction; // open_t
+	float desired_render_height_fraction; // open_t_target
+	float render_height_fraction_delta; // dopen_dt
+
+	TextInput* text_input;
 
 	STRETCHY_BUF(const char *) history; // all the strings that we draw
 } Console;
@@ -44,7 +47,6 @@ Console* console_create(
 	console->report_bg_colour = report_bg_colour;
 	console->report_text_colour = report_text_colour;
 
-	console->max_render_height_fraction = 0.7f;
 	console->current_render_height_fraction = 0.0f;
 	console->desired_render_height_fraction = 0.0f;
 	console->render_height_delta = 1.0f;
@@ -68,23 +70,40 @@ void console_draw(Console* console)
 
 	cursor_in_output = false;
 
+	float current_height = get_current_height();	
+
 	const SDL_Rect input_render_rect = {
 		.x = 0,
 		.y = 0,
-		.w = window_width,
-		.h = get_current_height()
+		.w = renderer->logical_width,
+		.h = current_height 
 	};
 	SDL_RenderSetDrawColor(renderer, console->input_bg_colour->r); // ... create wrapper
 	SDL_RenderFillRect(renderer, &input_render_rect);
 
 	const SDL_Rect report_render_rect = {
 		.x = 0,
-		.y = get_bottom(),
-		.w = window_width,
-		.h = get_bottom() + console->report_font->height
+		.y = current_height,
+		.w = renderer->logical_width,
+		.h = current_height + console->report_font->height
 	};
 	SDL_RenderSetDrawColor();
 	SDL_RenderFillRect(renderer, &report_render_rect);
+
+	// draw text now
+	int text_x = console->report_font->height * 0.5;
+	int text_y = current_height; 
+	
+	int text_index = STRETCHY_BUF_LEN(console->history) - 1;
+	while (text_y >= 0) {
+		if (text_index < 0) break;	
+
+		SDL_Surface* text_surface = TTF_RenderText_Solid(console->history[text_index]); // wrapper
+		SDL_RenderCopy(text_texture, text_x, text_y, NULL);
+
+		--index;
+		text_y -= report_font->height;
+	}
 }
 
 static inline bool height_needs_to_increase(Console* console)
@@ -99,17 +118,17 @@ static inline bool height_needs_to_decrease(Console* console)
 
 static void update_height(Console* console)
 {
-	static float open_size_delta = 0.016667 * console->open_size_rate;
+	static float render_height_fraction_change = 0.016667f * console->render_height_fraction_delta;
 
 	if (height_needs_to_increase(console)) {
-		console->current_render_height_fraction += open_size_delta;	
+		console->current_render_height_fraction += render_height_fraction_change;	
 		if (height_needs_to_decrease(console)) {
 			console->current_render_height_fraction = console->desired_render_height_fraction;		
 		}
 	} else if (height_needs_to_decrease(console)) {
-		console->current_render_height_fraction -= open_size_delta;		
-		if (console->current_render_height_fraction < 0) {
-			console->current_render_height_fraction = 0;		
+		console->current_render_height_fraction -= render_height_fraction_change;		
+		if (console->current_render_height_fraction < 0.0f) {
+			console->current_render_height_fraction = 0.0f;		
 		}
 	} else {
 		return;		
@@ -118,10 +137,11 @@ static void update_height(Console* console)
 
 void console_set_state(Console* console, CONSOLE_STATE console_state)
 {
-	it (console_state == OPEN_SMALL) {
-		console->desired_render_height_fraction = 1.0f;	
+	// possible add x-macros
+	if (console_state == OPEN_SMALL) {
+		console->desired_render_height_fraction = 0.25f;	
 	} else if (console_state == OPEN_LARGE) {
-		console->desired_render_height_fraction = 3.0f;
+		console->desired_render_height_fraction = 0.75f;
 	} else if (console_state == CLOSED) {
 		console->desired_render_height_fraction = 0.0f;
 	} else {
@@ -134,14 +154,22 @@ bool console_is_open(Console* console)
 	return console->current_render_height_fraction > 0.0f;		
 }
 
-static float get_current_height(Console* console)
+#define lerp(val1, val2, percentange) \
+	((val1) + (percentage) * (((val2)) - (val1)))
+static int get_current_height(Console* console, I_Renderer* renderer)
 {
-	return lerp(
-			1.0f, 
-			console->max_render_height_fraction, 
-			console->current_render_height_fraction
-		) * window_height;
+	return console->current_render_height_fraction * renderer->logical_height;
 }
+
+
+typedef struct {
+	const char* string;
+	bool entered;
+	bool escaped;
+	uint8_t input_buffer[8000];
+} TextInput;
+// TTF_RenderUTF8_Blended
+
 
 #endif
 
@@ -157,5 +185,15 @@ int main(void)
 
 void render(void)
 {
-	console_render(); // always have this
+	console_render();
+}
+
+// handle_global_events(SDL_Event* event) 
+void events(SDL_Event* event)
+{
+	switch (event->type) {
+	case SDL_TEXTINPUT:
+		const char* text = event->text.text;
+	case SDL_TEXTEDITING:
+	}
 }
