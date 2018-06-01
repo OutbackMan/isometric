@@ -1,6 +1,7 @@
 // 21:00
 
 // utilise linear probing to resolve collisions, i.e. place into next available slot
+// array almost always better than linked list as stored continguosly
 
 typedef struct {
 	void** keys;
