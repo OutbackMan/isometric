@@ -1,13 +1,6 @@
 #ifndef __editor_h__
 #define __editor_h__
 
-// DRAW_RECT
-// DRAW_TILE
-
-/******************************************************************************
-ACTS AS GUI/UI
-******************************************************************************/
-
 #include <SDL2/SDL.h>
 
 #include <stdbool.h>
@@ -25,7 +18,6 @@ typedef struct {
 	int dx, dy; // ???
 	int ms_time; // ???
 	int shift, scroll_key;
-	bool is_initted;
 	int side_extended[2]; // ???
 	ColourRect delay_rect[MAX_DELAY_RECT]; // ???
 	int delay_count; // ???

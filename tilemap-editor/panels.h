@@ -3,6 +3,8 @@
 
 #include "widget-info.h"
 
+/* use this pattern when only a single instance is required/logical */
+
 enum {
 	EDITOR_WIDGET_PANEL_TOOLBAR,
 	EDITOR_WIDGET_PANEL_COLORPIck,

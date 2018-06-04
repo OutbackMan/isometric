@@ -34,28 +34,30 @@ typedef struct {
 	unsigned layer_mask;
 } EditorWidgetTilemap__TileInfo;
 
+
+
+
+
 typedef struct {
-	short data[EDITOR_WIDGET_TILEMAP_MAX_Y][EDITOR_WIDGET_TILEMAP_MAX_X][EDITOR_MAX_LAYERS];
-	float properties[EDITOR_WIDGET_TILEMAP_MAX_Y][EDITOR_WIDGET_TILEMAP_MAX_X][EDITOR_MAX_PROPERTIES];
-	WidgetTilemap__Link links[EDITOR_WIDGET_TILEMAP_MAX_Y][EDITOR_WIDGET_TILEMAP_MAX_X];
-	int link_counts[EDITOR_WIDGET_TILEMAP_MAX_Y][EDITOR_WIDGET_TILEMAP_MAX_X];
-	int max_x, max_y, num_layers;
-	int spacing_x, spacing_y;
-	int palette_spacing_x, palette_spacing_y;
-	int scroll_x, scroll_y;
+	int tile_data[EDITOR_TILEMAP_MAX_HEIGHT][EDITOR_TILEMAP_MAX_WIDTH][EDITOR_LAYERS_MAX];
+	float tile_properties[EDITOR_TILEMAP_MAX_HEIGHT][EDITOR_TILEMAP_MAX_WIDTH][EDITOR_PROPERTIES_MAX];
+	Tilemap__Link tile_links[EDITOR_TILEMAP_MAX_HEIGHT][EDITOR_TILEMAP_MAX_WIDTH];
+	unsigned layers_in_use;
+	unsigned tile_render_width;
+	unsigned tile_render_height;
 	int current_category, current_tile, current_layer;
-	char* categories[MAX_CATEGORIES];
+	const char* categories[EDITOR_CATEGORIES_MAX];
 	int num_categories, category_scroll;
 	WidgetTilemap__TileInfo* tiles;
 	int num_tiles, max_tiles, digits;
-	unsigned char undo_available_valid;
-	unsigned char undo_available;
-	unsigned char redo_available;
+	bool valid_undo_is_available;
+	bool undo_is_available;
+	bool redo_is_available;
 	unsigned char padding;
 	int cur_palette_count;
 	int palette_scroll;
 	int tileinfo_dirty;
-	WidgetTilemap__Layer layer_info[MAX_LAYERS];
+	WidgetTilemap__Layer layer_info[EDITOR_LAYERS_MAX];
 	int has_layer_names;
 	int layername_width;
 	int layer_scroll;
@@ -64,7 +66,7 @@ typedef struct {
 	int undo_pos, undo_len, redo_len;
 	short background_tile;
 	unsigned char id_in_use[32768 >> 3];
-	short* undo_buffer;
+	short undo_buffer[BUFFER_MAX];
 } EditorWidgetTilemap;
 
 #endif
