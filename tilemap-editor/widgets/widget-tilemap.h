@@ -1,6 +1,39 @@
 #ifndef __widget_tilemap_h__
 #define __widget_tilemap_h__
 
+enum {
+	EDITOR_WIDGET_TILEMAP_COLOR_BACKGROUND,
+	EDITOR_WIDGET_TILEMAP_COLOR_BORDER,         
+	EDITOR_WIDGET_TILEMAP_COLOR_HIGHLIGHT,
+	EDITOR_WIDGET_TILEMAP_COLOR_GRID,               
+	EDITOR_WIDGET_TILEMAP_COLOR_SELECTION_OUTLINE1,
+	EDITOR_WIDGET_TILEMAP_COLOR_SELECTION_OUTLINE2,
+	EDITOR_WIDGET_TILEMAP_COLOR_TILEPALETTE_OUTLINE,
+	EDITOR_WIDGET_TILEMAP_COLOR_TILEPALETTE_BACKGROUND,
+
+	EDITOR_WIDGET_TILEMAP_COLOUR__NUM,
+};
+
+typedef enum {
+	TILE_PROPERTY_NONE,
+	TILE_PROPERTY_INT,
+	TILE_PROPERTY_FLOAT,
+	TILE_PROPERTY_BOOL,
+	TILE_PROPERTY_DISABLED
+} EDITOR_WIDGET_TILEMAP__TILE_PROPERTY;
+
+typedef struct {
+	int x;
+	int y;
+} EditorWidgetTilemap__Link;
+
+typedef struct {
+	int id;
+	unsigned category_id;
+	char* category;
+	unsigned layer_mask;
+} EditorWidgetTilemap__TileInfo;
+
 typedef struct {
 	short data[EDITOR_WIDGET_TILEMAP_MAX_Y][EDITOR_WIDGET_TILEMAP_MAX_X][EDITOR_MAX_LAYERS];
 	float properties[EDITOR_WIDGET_TILEMAP_MAX_Y][EDITOR_WIDGET_TILEMAP_MAX_X][EDITOR_MAX_PROPERTIES];
@@ -32,6 +65,6 @@ typedef struct {
 	short background_tile;
 	unsigned char id_in_use[32768 >> 3];
 	short* undo_buffer;
-} WidgetTilemap;
+} EditorWidgetTilemap;
 
 #endif
