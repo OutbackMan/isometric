@@ -1,20 +1,13 @@
 #include "tilemap.h"
 
-#include "layer.h"
 #include "config.h"
 
-EditorTileMap* editor_tilemap_create(unsigned tile_render_width, unsigned tile_render_width) // stbte_create_map()
+EditorTileMap* editor_tilemap_create(unsigned tile_render_width, unsigned tile_render_width)
 {
 	EditorTileMap* tile_map = xmalloc(sizeof(EditortTileMap));
 
 	tile_map->tile_render_width = tile_render_width;
 	tile_map->tile_render_height = tile_render_height;
-
-	for (size_t layer_index = 0; layer_index < EDITOR_LAYERS_MAX; ++layer_index) {
-		tile_map->layers[layer_index].is_hidden = false;
-		tile_map->layers[layer_index].is_locked = false;
-		tile_map->layers[layer_index].name = "";
-	}
 
 	tile_map->background_tile = NO_TILE;
 
@@ -30,14 +23,6 @@ static void tilemap_clear(EditorTilemap* tilemap)
 {
 	for (size_t map_y = 0; map_y < EDITOR_TILEMAP_MAX_HEIGHT; ++map_y) {
 		for (size_t map_x = 0; map_x < EDITOR_TILEMAP_MAX_WIDTH; ++map_x) {
-			for (size_t layer_index = 0; layer_index < EDITOR_LAYERS_MAX; ++layer_index) {
-				if (layer_index == 0) {
-					tilemap->tile_data[y][x][layer_index] = tilemap->background_tile;
-				} else {
-					tilemap->tile_data[y][x][layer_index] = NO_TILE;
-				}
-			}	
-
 			for (size_t property_index = 0; property_index < EDITOR_PROPERTIES_MAX; ++property_index) {
 				tilemap->tile_data[y][x][property_index] = 0;
 			}
@@ -47,14 +32,21 @@ static void tilemap_clear(EditorTilemap* tilemap)
 			tilemap->tile_links_count[y][x].y = 0;
 		}	
 	}	
+
+	for (size_t tile_count = 0; tile_count < tilemap->max_tiles; ++tile_count) {
+		tilemap->id_in_use[tile_count] = 0;		
+	}
 }
 
-static void tilemap_add_tile(EditorTilemap* tilemap, int id, unsigned layermask, const char* category)
+void editor_tilemap_define_tile(EditorTilemap* tilemap, int tile_id, const char* tile_category)
 {
-	tilemap->tile_data[tilemap->tiles_in_use].category = (char *)category;	
+	if (tilemap->available_tiles >= tilemap->max_tiles) { return; }
 
+	tilemap->id_in_use[tilemap->available_tiles] = tile_id;
+
+	tilemap->tiles[tilemap->available_tiles].category = (char *)tile_category;
+	tilemap->tiles[tilemap->available_tiles].id = tile_id;
+
+	++tilemap->available_tiles;
+	tilemap->tileinfo_dirty = 1;
 }
-
-
-
-

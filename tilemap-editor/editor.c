@@ -9,7 +9,6 @@ Editor* editor_create(void) // stbte_init_gui()
 	Editor* editor = xmalloc(sizeof(Editor));	
 
 	editor->active_tool = EDITOR_TOOL_BRUSH;
-	editor->active_event = NULL;
 
 	editor->want_to_show_links = true;	
 

@@ -33,19 +33,17 @@ typedef struct {
 	int id;
 	unsigned category_id;
 	char* category;
-	unsigned layer_mask;
 } EditorTilemap__TileInfo;
 
 extern static const EDITOR_TILEMAP_MAX_HEIGHT;
 
 typedef struct {
-	int tile_data[EDITOR_TILEMAP_MAX_HEIGHT][EDITOR_TILEMAP_MAX_WIDTH][EDITOR_LAYERS_MAX];
+	int tile_data[EDITOR_TILEMAP_MAX_HEIGHT][EDITOR_TILEMAP_MAX_WIDTH];
 	float tile_properties[EDITOR_TILEMAP_MAX_HEIGHT][EDITOR_TILEMAP_MAX_WIDTH][EDITOR_PROPERTIES_MAX];
 	Tilemap__Link tile_links[EDITOR_TILEMAP_MAX_HEIGHT][EDITOR_TILEMAP_MAX_WIDTH];
-	unsigned layers_in_use;
 	unsigned tile_render_width;
 	unsigned tile_render_height;
-	int current_category, current_tile, current_layer;
+	int current_category, current_tile;
 	const char* categories[EDITOR_CATEGORIES_MAX];
 	int num_categories, category_scroll;
 	Tilemap__TileInfo* tiles;
@@ -57,12 +55,7 @@ typedef struct {
 	int cur_palette_count;
 	int palette_scroll;
 	bool tileinfo_is_dirty;
-	Tilemap__Layer layer_info[EDITOR_LAYERS_MAX];
-	int has_layer_names;
-	int layername_width;
-	int layer_scroll;
 	int property_mode;
-	int solo_layer;
 	int undo_pos, undo_len, redo_len;
 	short background_tile;
 	unsigned char id_in_use[32768 >> 3];

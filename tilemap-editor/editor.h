@@ -9,12 +9,10 @@
 
 typedef struct {
 	EDITOR_TOOL_ID active_tool_id;
-	SDL_Event* active_event;
 	int active_id; // ???replace with is_active???
 	int hot_id; // ???
 	int next_hot_id; // ???
 	int event; // ???editor specific event???
-	int mouse_x, mouse_y;
 	int dx, dy; // ???
 	int ms_time; // ???
 	int shift, scroll_key;

@@ -1,0 +1,30 @@
+main()
+{
+	map = create_map();	|#########|
+
+	define_tile(map, grass_tile_id); // tiles will be drawn by referencing these ids, e.g. SDL_Texture* name[GRASS_TILE_ID];
+	define_tile(map, sand_tile_id);
+	define_tile(map, water_tile_id); |##########|
+
+	set_display(map);
+
+	while (running) {
+		case MOUSEMOVE, MOUSEBUTTON, MOUSEWHEEL:
+		mouse_sdl();
+		case KEYDOWN:
+		action(); // save()
+
+		tick(map);
+
+		draw(map);
+	}
+
+}
+
+EACH MODULE IMPLEMENTS EVENTS FUNCTION WHICH POPULATES RELEVENT DATA INSIDE A MODULE SPECIFIC EVENT HOLDER STRUCT
+
+
+save()
+{
+	
+}
