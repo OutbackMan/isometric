@@ -29,36 +29,40 @@ typedef struct {
 	int y;
 } EditorTilemap__Link;
 
+
 typedef struct {
-	int id;
-	unsigned category_id;
+	int sprite_id;
 	char* category;
-} EditorTilemap__TileInfo;
-
-extern static const EDITOR_TILEMAP_MAX_HEIGHT;
+} EditorTileMap__Tile;
 
 typedef struct {
-	int tile_data[EDITOR_TILEMAP_MAX_HEIGHT][EDITOR_TILEMAP_MAX_WIDTH];
-	float tile_properties[EDITOR_TILEMAP_MAX_HEIGHT][EDITOR_TILEMAP_MAX_WIDTH][EDITOR_PROPERTIES_MAX];
-	Tilemap__Link tile_links[EDITOR_TILEMAP_MAX_HEIGHT][EDITOR_TILEMAP_MAX_WIDTH];
+	EditorTileMap__Tile* tiles;	
+	size_t num_of_tiles;
+} EditorTileMap__TilePalette;
+
+typedef struct {
+	unsigned* placed_tiles;
+	size_t num_placed_tiles;
+	size_t current_placed_tile_index;
+	float* tile_properties; // ???
+	
+	EditorTileMap__TilePalette* tile_palette;
+	bool tileinfo_is_dirty;
+
+	EditorTileMap__Link* tile_links;
+
 	unsigned tile_render_width;
+	unsigned background_tile_id;
 	unsigned tile_render_height;
-	int current_category, current_tile;
-	const char* categories[EDITOR_CATEGORIES_MAX];
-	int num_categories, category_scroll;
-	Tilemap__TileInfo* tiles;
-	int num_tiles, max_tiles, digits;
+
 	bool valid_undo_is_available;
 	bool undo_is_available;
 	bool redo_is_available;
 	unsigned char padding;
 	int cur_palette_count;
 	int palette_scroll;
-	bool tileinfo_is_dirty;
 	int property_mode;
 	int undo_pos, undo_len, redo_len;
-	short background_tile;
-	unsigned char id_in_use[32768 >> 3];
 	short undo_buffer[EDITOR_RESTORE_UNDO_BUFFER_MAX];
 } EditorTilemap;
 
