@@ -9,8 +9,8 @@ main()
 		mouse_sdl();
 		case KEYDOWN:
 		action(); // save()
-
-		tick(map);
+	
+		update();
 
 		draw(map);
 	}

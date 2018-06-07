@@ -8,18 +8,17 @@
 #include "tilemap.h"
 
 typedef struct {
+			
+} Editor__InputValues;
+
+typedef struct {
 	EDITOR_TOOL_ID active_tool_id;
+	Editor__InputValues* input_values;
 	bool want_to_run;
 	int active_id; // ???replace with is_active???
-	int hot_id; // ???
-	int next_hot_id; // ???
-	int event; // ???editor specific event???
 	int dx, dy; // ???
-	int ms_time; // ???
 	int shift, scroll_key;
 	int side_extended[2]; // ???
-	ColourRect delay_rect[MAX_DELAY_RECT]; // ???
-	int delay_count; // ???
 	bool show_grid;
 	int brush_state;
 	int eyedrop_x, eyedrop_y, eyedrop_last_layer; // ???move into own???
@@ -37,7 +36,6 @@ typedef struct {
 	int x0, x1, y0, y1, left_width, right_width;
 	float alert_timer; // ???
 	const char* alert_msg;
-	float dt; // ???
 	Panel panels[NUM_PANELS];
 	short copy_buffer[MAX_COPY][MAX_LAYERS];
 	float copy_props[MAX_PROPS][MAX_PROPERTIES];
@@ -50,5 +48,11 @@ typedef struct {
 Editor* editor_create(void);
 
 void editor_destroy(Editor* editor);
+
+void editor_events(Editor* editor, SDL_Event* event);
+
+void editor_update(Editor* editor, float delta_time);
+
+void editor_render(Editor* editor, SDL_Renderer* renderer);
 
 #endif

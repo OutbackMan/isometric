@@ -36,4 +36,15 @@ typedef struct {
 	RestoreSystem* restore_system;
 } EditorTileMap;
 
+
+EditorTileMap* editor_tile_map_create(void);
+
+void editor_tile_map_destroy(EditorTileMap* editor);
+
+void editor_tile_map_events(EditorTileMap* editor, SDL_Event* event);
+
+void editor_tile_map_render(EditorTileMap* editor, SDL_Renderer* renderer);
+
+void editor_tile_map_update(EditorTileMap* editor, float delta_time);
+
 #endif

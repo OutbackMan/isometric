@@ -4,13 +4,13 @@ int main(void)
 {
 	Editor* editor = editor_create();
 
-	while (editor->want_to_run) {
-		editor_events();
-		editor_update();
-		editor_render();
-	}
+	editor_events(editor, event);
 
-	editor_destroy();
+	editor_update();
+
+	editor_render();
+
+	editor_destroy(editor);
 
 	return 0;	
 }
