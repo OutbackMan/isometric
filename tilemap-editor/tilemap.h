@@ -22,7 +22,7 @@ enum {
 
 typedef struct {
 	sprite_id_t tiles[MAX_TILES_X * MAX_TILES_Y];
-	size_t num_tiles_x;
+	size_t num_tiles_x; // max_x
 	size_t num_tiles_y;
 	size_t current_placed_tile_index;
 	
