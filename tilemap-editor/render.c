@@ -8,27 +8,13 @@
 // editor_traverse()
 void editor_render(Editor* editor, SDL_Renderer* renderer)
 {
-	render_editor_background(editor, renderer);
-
 	render_editor_tilemap(editor, renderer);
-}
-
-static void render_editor_background(SDL_Renderer* renderer)
-{
-	_SDL_SetRenderDrawColor(renderer, EDITOR_BACKGROUND_COLOR); // _SDL --> direct wrapper
-	_SDL_RenderFillRect(renderer, NULL);
 }
 
 // spacing_x may be equivalent to tile render width
 static void render_editor_tilemap(SDL_Renderer* renderer)
 {
 	// START(background)
-	int x0 = 0 - tile_map->input_values->scroll_x;
-	int y0 = 0 - tile_map->input_values->scroll_y;
-	int x1 = tile_map->tile_spacing_x * tile_map->num_tiles_x; 
-	int y1 = tile_map->tile_spacing_y * tile_map->num_tiles_y; 
-
-	__SDL_RenderRect(renderer, x0, y0, x1, y1, TILEMAP_BACKGROUND_COLOR); // __SDL --> indirect wrapper
 	// END(background)
 
 	// START(tiles)	
