@@ -1,14 +1,8 @@
 main()
 {
-	map = create_map();	|#########|
+	editor = editor_create() // create_tilemap() --> create_restore()
 
-	define_tile(map, grass_tile_id); // tiles will be drawn by referencing these ids, e.g. SDL_Texture* name[GRASS_TILE_ID];
-	define_tile(map, sand_tile_id);
-	define_tile(map, water_tile_id); |##########|
-
-	set_display(map);
-
-	while (running) {
+	while (want_to_run) {
 		case MOUSEMOVE, MOUSEBUTTON, MOUSEWHEEL:
 		mouse_sdl();
 		case KEYDOWN:

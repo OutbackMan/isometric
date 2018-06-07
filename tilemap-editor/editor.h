@@ -9,6 +9,7 @@
 
 typedef struct {
 	EDITOR_TOOL_ID active_tool_id;
+	bool want_to_run;
 	int active_id; // ???replace with is_active???
 	int hot_id; // ???
 	int next_hot_id; // ???
@@ -20,7 +21,6 @@ typedef struct {
 	ColourRect delay_rect[MAX_DELAY_RECT]; // ???
 	int delay_count; // ???
 	bool show_grid;
-	bool show_links;
 	int brush_state;
 	int eyedrop_x, eyedrop_y, eyedrop_last_layer; // ???move into own???
 	int pasting, paste_x, paste_y;
