@@ -3,6 +3,10 @@
 
 #include <SDL2/SDL.h>
 
+// want to pack into one sprite-sheet to avoid swapping textures
+
+typedef size_t sprite_id_t;
+
 typedef struct {
 	SDL_Texture* sprite_sheet;
 	unsigned sprite_width;

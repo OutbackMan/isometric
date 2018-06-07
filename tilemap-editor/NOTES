@@ -1,3 +1,5 @@
+editor_traverse() --> render
+
 main()
 {
 	editor = editor_create() // create_tilemap() --> create_restore()
