@@ -1,3 +1,7 @@
+// if must be part of a containing object, then that object holds event information
+
+// button, scrollbar, slider  
+
 int main(void)
 {
 	while (running) {
@@ -25,13 +29,6 @@ void render()
 }
 
 // START(button)
-typedef struct {
-	int x0, y0;
-	int width, height;
-	bool mouse_is_over;
-	bool mouse_has_clicked;
-} Button;
-
 button_create()
 {
 }
@@ -79,13 +76,24 @@ typedef struct {
 	STRETCHY_BUF(Button*) buttons;	
 } UI;
 
+static int selected_tile_num = 0;
+
 ui_create() {
 	BUF_PUSH(ui->buttons, button_create("load button"));
 	BUF_PUSH(ui->buttons, button_create("save button"));
 	BUF_PUSH(ui->buttons, button_create("another button"));
 }
 
+ui_events() {
+	if (event.key.keysym.sym == SDLK_down) {
+		selected_tile_num++;		
+	}
+}
+
 ui_render() {
+	SDL_RenderFillRect(renderer, -draw_offset_x * tile_width, -draw_offset_y * tile_height, map_width * tile_width, map_height * tile_height);
+	SDL_RenderCopy(renderer, selected_texture, {mouse.x - tile_width / 2, mouse.y - tile_height / 2});
+
 	for (size_t button_index = 0; button_index < BUTTON__NUM; ++button_index) {
 		button_draw(ui->buttons[button_index]);		
 	}
@@ -99,6 +107,7 @@ typedef struct {
 	int render_tile_height;
 	int num_tile_width;
 } Map;
+
 
 map_set_tile()
 {
