@@ -36,7 +36,7 @@ typedef struct {
 	int x0, x1, y0, y1, left_width, right_width;
 	float alert_timer; // ???
 	const char* alert_msg;
-	Panel panels[NUM_PANELS];
+	UI* ui;
 	short copy_buffer[MAX_COPY][MAX_LAYERS];
 	float copy_props[MAX_PROPS][MAX_PROPERTIES];
 	Link copy_links[MAX_COPY];
