@@ -6,18 +6,25 @@
 // cores read in memory on cache line boundaries, so two cores could be operating on the same cache line, resulting in possible overwrites
 // as compiler doesn't know about threads, may have to use 'volatile' so it doesn't perform certain optimisations
 
+#define COMPLETE_PAST_WRITES_BEFORE_FUTURE_WRITES _WriteBarrier(); __mm_sfence() // fence is cpu intrinsic, not necessary for intel
+#define COMPLETE_PAST_READS_BEFORE_FUTURE_READS _ReadBarrier()
+
 typedef struct {
   char* string_to_print;
 } WorkQueueEntry;
 
-GLOBAL uint32_t next_entry_to_do = 0;
-GLOBAL uint32_t entry_count = 0;
+GLOBAL uint32_t volatile next_entry_to_do = 0;
+GLOBAL uint32_t volatile entry_count = 0;
 WorkQueueEntry entries[256];
 
 static void push_string(const char* str)
 {
-  // these writes not in order
-  entries[entry_count++].string_to_print = str;
+  // threads may read data before it is written (compiler may move the increment before for optimisation)
+  entries[entry_count].string_to_print = str;
+  
+  COMPLETE_PAST_WRITES_BEFORE_FUTURE_WRITES;
+  
+  ++entry_count;
 }
 
 typedef struct {
@@ -37,7 +44,7 @@ INTERNAL int thread_function(void* thread_param)
     }
   }
   
-  return 0;
+//  return 0; (prevent unreachable code warning)
 }
 
 int game_main(void)
