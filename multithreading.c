@@ -124,6 +124,6 @@ INTERNAL WorkQueueItem begin_work_queue_work(WorkQueue* queue)
 
 INTERNAL void end_work_queue_work(WorkQueue* queue)
 {
-InterlockedIncrement(&entry_completion_count);
+    InterlockedIncrement(&entry_completion_count);
     has_done_work = true;
 }
