@@ -90,4 +90,40 @@ int game_main(void)
 /*************************************************************************
 ABSTRACT WORK QUEUE
 *************************************************************************/
+typedef struct {
+  volatile size_t entry_count;
+  volatile size_t next_entry_to_do;
+  volatile size_t entry_completion_count;
+  const size_t max_entry_count;
+  SDL_sem* semaphore_handle;
+} WorkQueue;
 
+INTERNAL void add_work_queue_entry(WorkQueue* queue)
+{
+  ++queue->entry_count;
+  SDL_SemWait(queue->semaphore_handle);
+}
+
+typedef struct {
+  bool exists;
+  size_t index;
+} WorkQueueItem;
+
+INTERNAL WorkQueueItem begin_work_queue_work(WorkQueue* queue)
+{
+  WorkQueueItem item;
+  item.exists = false;
+  if (next_entry_to_do < entry_count) { // SDL_AtomicGet() perhaps
+    int entry_index = InterlockedIncrement(&queue->next_entry_to_do) - 1; // just use SDL_Lock()
+    item.exists = true;
+    COMPLETE_PAST_READS_BEFORE_FUTURE_READS;
+  }
+  
+  return item;
+}
+
+INTERNAL void end_work_queue_work(WorkQueue* queue)
+{
+InterlockedIncrement(&entry_completion_count);
+    has_done_work = true;
+}
