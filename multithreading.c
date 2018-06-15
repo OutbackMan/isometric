@@ -3,7 +3,7 @@ static int thread_function(void* data)
   while (global_is_running) {
     char* msg = (char *)data;
     puts(msg);
-  } // as compiler doesn't know about threads, may have to use 'volatile'
+  } // as compiler doesn't know about threads, may have to use 'volatile' so it doesn't perform certain optimisations
   
   return 0;
 }
