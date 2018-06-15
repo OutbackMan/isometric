@@ -21,7 +21,7 @@ WorkQueueEntry entries[256];
 static void push_string(SDL_Sem* semaphore_handle, const char* str)
 {
   SDL_assert(entry_count < array_count(entries));
-  // threads may read data before it is written (compiler may move the increment before for optimisation)
+  
   entries[entry_count].string_to_print = str;
   
   COMPLETE_PAST_WRITES_BEFORE_FUTURE_WRITES;
@@ -36,18 +36,27 @@ typedef struct {
   int logical_thread_index;
 } TheadInfo;
 
+inline bool thread_work()
+{     
+  bool has_done_work = false;
+  if (next_entry_to_do < entry_count) { // SDL_AtomicGet() perhaps
+    int entry_index = InterlockedIncrement(&next_entry_to_do) - 1; // just use SDL_Lock()
+    COMPLETE_PAST_READS_BEFORE_FUTURE_READS;
+    puts(entries[entry_index]);
+      
+    InterlockedIncrement(&entry_completion_count);
+    has_done_work = true;
+  }
+  
+  return has_done_work;
+}
+
 INTERNAL int thread_function(void* thread_param)
 {
   ThreadInfo* thread_info = (ThreadInfo *)thread_param;
  
   while (true) {
-    if (next_entry_to_do < entry_count) {
-      int entry_index = InterlockedIncrement(&next_entry_to_do) - 1; // just use SDL_Lock()
-      COMPLETE_PAST_READS_BEFORE_FUTURE_READS;
-      puts(entries[entry_index]);
-      
-      InterlockedIncrement(&entry_completion_count);
-    } else {
+    if (!thread_work()) {
       SDL_SemWait(thread_info->semaphore_handle);
     }
   }
@@ -62,7 +71,7 @@ int game_main(void)
   uint32_t starting_active_threads = 0;
   SDL_sem* semaphore_handle = SDL_CreateSemaphore(starting_active_threads);
   
-  for (int thread_index = 0; thread_index < ARRAY_COUNT(thread_info); ++thread_index) {
+  for (int thread_index = 0; thread_index < ARRAY_COUNT(thread_info) - 1; ++thread_index) {
     thread_info[thread_index] = { .logical_thread_index = thread_index, .semaphore_handle = semaphore_handle };
     SDL_Thread* thread = SDL_CreateThread(thread_function, NULL, &thread_info);
   }
@@ -73,7 +82,12 @@ int game_main(void)
   push_string(semaphore_handle, "string 3");
   push_string(semaphore_handle, "string 4");
   
-  while (entry_count != entry_completion_count); // wait till all work has been done
+  while (entry_count != entry_completion_count) do_thread_work(total_threads - 1);
 
   return 0;
 }
+
+/*************************************************************************
+ABSTRACT WORK QUEUE
+*************************************************************************/
+
