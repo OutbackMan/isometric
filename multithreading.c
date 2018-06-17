@@ -105,37 +105,69 @@ INTERNAL void add_work_queue_entry(WorkQueue* queue)
 }
 
 typedef struct {
-  bool exists;
+  bool is_valid;
   size_t index;
 } WorkQueueItem;
 
-INTERNAL WorkQueueItem begin_work_queue_work(WorkQueue* queue)
+INTERNAL WorkQueueItem get_next_work_queue_item(WorkQueue* queue)
 {
   WorkQueueItem result;
-  result.exists = false;
+  result.is_valid = false;
   if (next_entry_to_do < entry_count) { // SDL_AtomicGet() perhaps
     int entry_index = InterlockedIncrement(&queue->next_entry_to_do) - 1; // just use SDL_Lock()
-    result.exists = true;
+    result.is_valid = true;
     COMPLETE_PAST_READS_BEFORE_FUTURE_READS;
   }
   
   return result;
 }
 
-INTERNAL void end_work_queue_work(WorkQueue* queue)
+INTERNAL void mark_queue_item_completed(WorkQueue* queue, WorkQueueItem* item)
 {
-    InterlockedIncrement(&entry_completion_count);
+    InterlockedIncrement(&queue->entry_completion_count);
 }
 
-INTERNAL bool queue_work_still_on_progress(WorkQueue* queue)
+INTERNAL bool queue_work_still_in_progress(WorkQueue* queue)
 {
   return queue->entry_completion_count != queue->entry_count;
 }
 
 INTERNAL bool thread_work(int thread_index)
 {     
-  bool has_done_work = false;
-  WorkQueueItem item = begin_work_queue_work(queue);
+  WorkQueueItem item = get_next_work_queue_item(queue);
+  if (item.is_valid) {
+      WorkQueueEntry* entry = entries + item.index;
+      mark_work_queue_item_completed(queue, item);
+  }
   // ... fill
-  return has_done_work;
+  return item.is_valid;
 }
+
+INTERNAL int thread_function(void* thread_param)
+{
+  ThreadInfo* thread_info = (ThreadInfo *)thread_param;
+ 
+  while (true) {
+    if (!thread_work(thread_info->queue, thread_info->thread_index)) {
+      SDL_SemWait(thread_info->semaphore_handle);
+    }
+  }
+  
+//  return 0; (prevent unreachable code warning)
+}
+
+INTERNAL size_t get_next_available_work_queue_index(Queue* work_queue)
+{
+    return queue->entry_count;
+}
+
+INTERNAL void push_string(WorkQueue* queue, const char* str)
+{
+    size_t index = get_next_available_work_queue_index(queue);
+    entries[index].string_to_print = string;
+    add_work_queue_entry(queue);
+}
+
+
+
+
