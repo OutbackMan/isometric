@@ -82,7 +82,7 @@ int game_main(void)
   push_string(semaphore_handle, "string 3");
   push_string(semaphore_handle, "string 4");
   
-  while (entry_count != entry_completion_count) do_thread_work(total_threads - 1);
+  while (queue_work_still_in_progress(queue)) do_thread_work(total_threads - 1);
 
   return 0;
 }
@@ -111,19 +111,31 @@ typedef struct {
 
 INTERNAL WorkQueueItem begin_work_queue_work(WorkQueue* queue)
 {
-  WorkQueueItem item;
-  item.exists = false;
+  WorkQueueItem result;
+  result.exists = false;
   if (next_entry_to_do < entry_count) { // SDL_AtomicGet() perhaps
     int entry_index = InterlockedIncrement(&queue->next_entry_to_do) - 1; // just use SDL_Lock()
-    item.exists = true;
+    result.exists = true;
     COMPLETE_PAST_READS_BEFORE_FUTURE_READS;
   }
   
-  return item;
+  return result;
 }
 
 INTERNAL void end_work_queue_work(WorkQueue* queue)
 {
     InterlockedIncrement(&entry_completion_count);
-    has_done_work = true;
+}
+
+INTERNAL bool queue_work_still_on_progress(WorkQueue* queue)
+{
+  return queue->entry_completion_count != queue->entry_count;
+}
+
+INTERNAL bool thread_work(int thread_index)
+{     
+  bool has_done_work = false;
+  WorkQueueItem item = begin_work_queue_work(queue);
+  // ... fill
+  return has_done_work;
 }
