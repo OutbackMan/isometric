@@ -10,7 +10,7 @@
 #define COMPLETE_PAST_READS_BEFORE_FUTURE_READS _ReadBarrier()
 
 typedef struct {
-  char* string_to_print;
+  void* user_ptr;
 } WorkQueueEntry;
 
 GLOBAL uint32_t volatile entry_completion_count = 0;
@@ -32,7 +32,6 @@ static void push_string(SDL_Sem* semaphore_handle, const char* str)
 }
 
 typedef struct {
-  SDL_sem* semaphore_handle;
   int logical_thread_index;
 } TheadInfo;
 
@@ -76,13 +75,19 @@ int game_main(void)
     SDL_Thread* thread = SDL_CreateThread(thread_function, NULL, &thread_info);
   }
   
-  push_string(semaphore_handle, "string 0");
-  push_string(semaphore_handle, "string 1");
-  push_string(semaphore_handle, "string 2");
-  push_string(semaphore_handle, "string 3");
-  push_string(semaphore_handle, "string 4");
+  push_string(queue, "string 0");
+  push_string(queue, "string 1");
+  push_string(queue, "string 2");
+  push_string(queue, "string 3");
+  push_string(queue, "string 4");
   
-  while (queue_work_still_in_progress(queue)) do_thread_work(total_threads - 1);
+  WorkQueueEntry entry;
+  while (queue_work_still_in_progress(queue)) {
+    entry = complete_and_get_next_work_queue_entry();
+    if (entry.is_valid) {
+       do_thread_work(entry, total_threads - 1); 
+    }
+  }
 
   return 0;
 }
@@ -94,12 +99,13 @@ typedef struct {
   volatile size_t entry_count;
   volatile size_t next_entry_to_do;
   volatile size_t entry_completion_count;
-  const size_t max_entry_count;
   SDL_sem* semaphore_handle;
+  WorkQueueEntry entries[256];
 } WorkQueue;
 
-INTERNAL void add_work_queue_entry(WorkQueue* queue)
+INTERNAL void add_work_queue_entry(WorkQueue* queue, void* ptr)
 {
+  queue->entries[queue->entry_count].user_ptr = ptr;
   ++queue->entry_count;
   SDL_SemWait(queue->semaphore_handle);
 }
@@ -109,10 +115,15 @@ typedef struct {
   size_t index;
 } WorkQueueItem;
 
-INTERNAL WorkQueueItem get_next_work_queue_item(WorkQueue* queue)
+INTERNAL WorkQueueItem complete_and_get_next_work_queue_item(WorkQueue* queue, WorkQueueEntry* completed)
 {
   WorkQueueItem result;
   result.is_valid = false;
+  
+  if (completed->is_valid) {
+    InterlockedIncrement(&queue->entry_completion_count);
+  }
+    
   if (next_entry_to_do < entry_count) { // SDL_AtomicGet() perhaps
     int entry_index = InterlockedIncrement(&queue->next_entry_to_do) - 1; // just use SDL_Lock()
     result.is_valid = true;
@@ -122,34 +133,30 @@ INTERNAL WorkQueueItem get_next_work_queue_item(WorkQueue* queue)
   return result;
 }
 
-INTERNAL void mark_queue_item_completed(WorkQueue* queue, WorkQueueItem* item)
-{
-    InterlockedIncrement(&queue->entry_completion_count);
-}
-
 INTERNAL bool queue_work_still_in_progress(WorkQueue* queue)
 {
   return queue->entry_completion_count != queue->entry_count;
 }
 
-INTERNAL bool thread_work(int thread_index)
+INTERNAL void thread_work(WorkQueueEntry* entry, int thread_index)
 {     
-  WorkQueueItem item = get_next_work_queue_item(queue);
-  if (item.is_valid) {
-      WorkQueueEntry* entry = entries + item.index;
-      mark_work_queue_item_completed(queue, item);
-  }
-  // ... fill
-  return item.is_valid;
+   assert(entry->is_valid);
+   WorkQueueEntry* entry = entries + item.index;
+   mark_work_queue_item_completed(queue, item);
+   puts(entry->str);
 }
 
 INTERNAL int thread_function(void* thread_param)
 {
   ThreadInfo* thread_info = (ThreadInfo *)thread_param;
  
+  WorkQueueEntry* entry;
   while (true) {
-    if (!thread_work(thread_info->queue, thread_info->thread_index)) {
-      SDL_SemWait(thread_info->semaphore_handle);
+    entry = complete_and_get_next_work_queue_entry(queue, entry);
+    if (entry->is_valid) {
+        thread_work(entry, thread_info->thread_index);
+    } else {
+        SDL_SemWait(thread_info->semaphore_handle);
     }
   }
   
