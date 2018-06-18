@@ -95,8 +95,8 @@ bool do_next_work_queue_entry(WorkQueue* queue)
 {
   bool we_should_sleep = false;
   
-  int new_next_entry_to_read = (queue->next_entry_to_read + 1) % ARRAY_COUNT(queue->entries);
   int original_next_entry_to_read = queue->next_entry_to_read;
+  int new_next_entry_to_read = (queue->next_entry_to_read + 1) % ARRAY_COUNT(queue->entries);
   if (original_next_entry_to_read != queue->next_entry_to_write) { // SDL_AtomicGet() perhaps
     int entry_index = InterlockedCompareExchange(&queue->next_entry_to_read, new_next_entry_to_read, original_next_entry_to_read);
     if (entry_index == original_next_entry_to_read) { 
