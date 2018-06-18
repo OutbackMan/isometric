@@ -6,6 +6,9 @@ int x =
 	10;
 */
 // load assets via threads
+#define BIT(amount) amount
+#define BYTE(amount) (8 * BIT(amount))
+#define KILOBYTES(amount) (1000 * BYTE(amount))
 
 typedef enum {
 	TEXTURE_GRASS,
@@ -29,19 +32,42 @@ void assets_texture_render(Assets* assets, ASSET_TEXTURE_ID texture_id)
 {
 	if (assets_texture_get(assets, texture_id) != NULL) {
 		SDL_RenderCopyEx();
+	} else {
+		assets_texture_load(assets, texture_id);
 	}
 	
 }
 
-void assets_texture_load(Assets* assets)
+typedef struct {
+	Assets* assets;
+	const char* file_name;
+	TEXTURE_ASSET_ID texture_id;
+} LoadAssetWork;
+INTERNAL WORK_QUEUE_CALLBACK(load_asset_work)
 {
-	assets->textures[TEXTURE_SWORD] = SDL_LoadText("sword.png");
+	LoadAssetWork* work = (LoadAssetWork *)data;
+	work->assets->textures[work->texture_id] = SDL_LoadTexture(work->file_name);
 }
+
+void assets_texture_load(Assets* assets, ASSET_TEXTURE_ID texture_id)
+{
+	LoadAssetWork* work;
+	work->assets = assets;
+	work->texture_id = texture_id;
+	
+	work_queue_add_entry(queue, load_asset_work);
+	
+	switch (texture_id) {
+	case TEXTURE_SWORD:
+		assets->file_name = "sword.png";
+		break;
+	}
+	
+}
+
 
 
 int main(void)
 {
-	game_state->assets[ASSET_TEXTURE_GRASS] = load_texture(ASSET_TEXTURE_GRASS);	
-
 	return 0;	
 }
