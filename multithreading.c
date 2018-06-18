@@ -11,7 +11,7 @@
 
 typedef struct {
   void* user_ptr;
-} WorkQueueEntry;
+} WorkQueueEntryStorage;
 
 GLOBAL uint32_t volatile entry_completion_count = 0;
 GLOBAL uint32_t volatile next_entry_to_do = 0;
@@ -100,10 +100,10 @@ typedef struct {
   volatile size_t next_entry_to_do;
   volatile size_t entry_completion_count;
   SDL_sem* semaphore_handle;
-  WorkQueueEntry entries[256];
+  WorkQueueEntryStorage entries[256];
 } WorkQueue;
 
-INTERNAL void add_work_queue_entry(WorkQueue* queue, void* ptr)
+INTERNAL void add_work_queue_entry(WorkQueue* queue, void* ptr) // public
 {
   queue->entries[queue->entry_count].user_ptr = ptr;
   ++queue->entry_count;
@@ -111,11 +111,11 @@ INTERNAL void add_work_queue_entry(WorkQueue* queue, void* ptr)
 }
 
 typedef struct {
-  bool is_valid;
+  void* data;
   size_t index;
 } WorkQueueItem;
 
-INTERNAL WorkQueueItem complete_and_get_next_work_queue_item(WorkQueue* queue, WorkQueueEntry* completed)
+INTERNAL WorkQueueItem complete_and_get_next_work_queue_item(WorkQueue* queue, WorkQueueEntry* completed) // public
 {
   WorkQueueItem result;
   result.is_valid = false;
@@ -126,6 +126,7 @@ INTERNAL WorkQueueItem complete_and_get_next_work_queue_item(WorkQueue* queue, W
     
   if (next_entry_to_do < entry_count) { // SDL_AtomicGet() perhaps
     int entry_index = InterlockedIncrement(&queue->next_entry_to_do) - 1; // just use SDL_Lock()
+    result.data = queue->entries[index].usr_ptr;
     result.is_valid = true;
     COMPLETE_PAST_READS_BEFORE_FUTURE_READS;
   }
@@ -133,7 +134,7 @@ INTERNAL WorkQueueItem complete_and_get_next_work_queue_item(WorkQueue* queue, W
   return result;
 }
 
-INTERNAL bool queue_work_still_in_progress(WorkQueue* queue)
+INTERNAL bool queue_work_still_in_progress(WorkQueue* queue) // public
 {
   return queue->entry_completion_count != queue->entry_count;
 }
@@ -141,9 +142,7 @@ INTERNAL bool queue_work_still_in_progress(WorkQueue* queue)
 INTERNAL void thread_work(WorkQueueEntry* entry, int thread_index)
 {     
    assert(entry->is_valid);
-   WorkQueueEntry* entry = entries + item.index;
-   mark_work_queue_item_completed(queue, item);
-   puts(entry->str);
+   puts((const char *)entry->data);
 }
 
 INTERNAL int thread_function(void* thread_param)
@@ -170,9 +169,7 @@ INTERNAL size_t get_next_available_work_queue_index(Queue* work_queue)
 
 INTERNAL void push_string(WorkQueue* queue, const char* str)
 {
-    size_t index = get_next_available_work_queue_index(queue);
-    entries[index].string_to_print = string;
-    add_work_queue_entry(queue);
+    add_work_queue_entry(queue, str);
 }
 
 
