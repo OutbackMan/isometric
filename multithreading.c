@@ -71,13 +71,12 @@ int game_main(void)
 
 void complete_all_work(WorkQueue* queue)
 {
-  while (queue->entry_count != queue->entry_completion_count) {
+  while (queue->completion_goal != queue->completion_count) {
     do_next_queue_work_entry(queue);
   }
   
-  queue->entry_count = 0;
-  queue->next_entry_to_do = 0;
-  queue->entry_completion_count = 0;
+  queue->completion_goal = 0;
+  queue->completion_count = 0;
 }
 
 /*************************************************************************
@@ -86,7 +85,8 @@ ABSTRACT WORK QUEUE
 typedef struct {
   volatile size_t next_entry_to_read;
   volatile size_t next_entry_to_write;
-  volatile size_t first_uncompleted_entry;
+  volatile size_t completion_goal;
+  volatile size_t completion_count;
   SDL_sem* semaphore_handle;
   WorkQueueEntryStorage entries[256];
 } WorkQueue;
@@ -95,13 +95,14 @@ bool do_next_work_queue_entry(WorkQueue* queue)
 {
   bool we_should_sleep = false;
   
-  int original_next_entry_to_do = queue->next_entry_to_do;
-  if (queue->next_entry_to_do < queue->entry_count) { // SDL_AtomicGet() perhaps
-    int entry_index = InterlockedCompareExchange(&queue->next_entry_to_do, original_next_entry_to_do + 1, original_next_entry_to_do);
-    if (entry_index == original_next_entry_to_do) { 
+  int new_next_entry_to_read = (queue->next_entry_to_read + 1) % ARRAY_COUNT(queue->entries);
+  int original_next_entry_to_read = queue->next_entry_to_read;
+  if (original_next_entry_to_read != queue->next_entry_to_write) { // SDL_AtomicGet() perhaps
+    int entry_index = InterlockedCompareExchange(&queue->next_entry_to_read, new_next_entry_to_read, original_next_entry_to_read);
+    if (entry_index == original_next_entry_to_read) { 
       WorkQueueEntry* entry = queue->entries[entry_index];
       entry->callback(queue, entry->data);
-      InterlockedIncrement(&queue->entry_completion_count);
+      InterlockedIncrement(&queue->completion_count);
     } else {
       // another thread beaten to increment
     }
@@ -118,11 +119,17 @@ typedef void (*work_queue_callback)(WorkQueue* queue, void* data);
 
 void add_entry(WorkQueue* queue, work_queue_callback callback, void* data)
 {
-  WorkQueueEntry* entry = queue->entries[queue->entry_count];
+  int new_next_entry_to_write = (queue->next_entry_to_write + 1) % ARRAY_COUNT(queue->entries);
+  assert(new_next_entry_to_write != queue->next_entry_to_read);
+  WorkQueueEntry* entry = queue->entries[queue->next_entry_to_write];
   entry->callback = callback;
   entry->data = data;
+  ++queue->completion_goal;
   WRITE_BARRIER;
-  ++queue->entry_count;
+  queue->next_entry_to_write = new_next_entry_to_write;
+  if (queue->next_entry_to_write == ARRAY_COUNT(queue->entries)) {
+    queue->next_entry_to_write = 0;
+  }
   SDL_SemWait(queue->semaphore_handle);
 }
 
