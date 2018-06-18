@@ -6,49 +6,24 @@
 // cores read in memory on cache line boundaries, so two cores could be operating on the same cache line, resulting in possible overwrites
 // as compiler doesn't know about threads, may have to use 'volatile' so it doesn't perform certain optimisations
 
+#define ARRAY_COUNT(arr) (sizeof(arr) / sizeof(a[0]))
+
 #define COMPLETE_PAST_WRITES_BEFORE_FUTURE_WRITES _WriteBarrier(); __mm_sfence() // fence is cpu intrinsic, not necessary for intel
 #define COMPLETE_PAST_READS_BEFORE_FUTURE_READS _ReadBarrier()
 
 typedef struct {
-  void* user_ptr;
-} WorkQueueEntryStorage;
+  work_queue_callback callback;
+  void* data;
+} WorkQueueEntry;
 
 GLOBAL uint32_t volatile entry_completion_count = 0;
 GLOBAL uint32_t volatile next_entry_to_do = 0;
 GLOBAL uint32_t volatile entry_count = 0;
 WorkQueueEntry entries[256];
 
-static void push_string(SDL_Sem* semaphore_handle, const char* str)
-{
-  SDL_assert(entry_count < array_count(entries));
-  
-  entries[entry_count].string_to_print = str;
-  
-  COMPLETE_PAST_WRITES_BEFORE_FUTURE_WRITES;
-  
-  ++entry_count;
-  
-  SDL_SemPost(semaphore_handle);
-}
-
 typedef struct {
   int logical_thread_index;
 } TheadInfo;
-
-inline bool thread_work()
-{     
-  bool has_done_work = false;
-  if (next_entry_to_do < entry_count) { // SDL_AtomicGet() perhaps
-    int entry_index = InterlockedIncrement(&next_entry_to_do) - 1; // just use SDL_Lock()
-    COMPLETE_PAST_READS_BEFORE_FUTURE_READS;
-    puts(entries[entry_index]);
-      
-    InterlockedIncrement(&entry_completion_count);
-    has_done_work = true;
-  }
-  
-  return has_done_work;
-}
 
 INTERNAL int thread_function(void* thread_param)
 {
@@ -81,15 +56,17 @@ int game_main(void)
   push_string(queue, "string 3");
   push_string(queue, "string 4");
   
-  WorkQueueEntry entry;
-  while (queue_work_still_in_progress(queue)) {
-    entry = complete_and_get_next_work_queue_entry();
-    if (entry.is_valid) {
-       do_thread_work(entry, total_threads - 1); 
-    }
-  }
-
+  complete_all_work(queue);
+  
   return 0;
+}
+
+void complete_all_work(WorkQueue* queue)
+{
+  WorkQueueEntry entry;
+  while (queue->entry_count != queue->entry_completion_count) {
+    do_next_queue_work_entry(queue);
+  }
 }
 
 /*************************************************************************
@@ -103,35 +80,36 @@ typedef struct {
   WorkQueueEntryStorage entries[256];
 } WorkQueue;
 
-INTERNAL void add_work_queue_entry(WorkQueue* queue, void* ptr) // public
+void do_next_work_queue_entry(WorkQueue* queue)
 {
-  queue->entries[queue->entry_count].user_ptr = ptr;
-  ++queue->entry_count;
-  SDL_SemWait(queue->semaphore_handle);
-}
-
-typedef struct {
-  void* data;
-  size_t index;
-} WorkQueueItem;
-
-INTERNAL WorkQueueItem complete_and_get_next_work_queue_item(WorkQueue* queue, WorkQueueEntry* completed) // public
-{
-  WorkQueueItem result;
-  result.is_valid = false;
-  
-  if (completed->is_valid) {
-    InterlockedIncrement(&queue->entry_completion_count);
-  }
-    
-  if (next_entry_to_do < entry_count) { // SDL_AtomicGet() perhaps
-    int entry_index = InterlockedIncrement(&queue->next_entry_to_do) - 1; // just use SDL_Lock()
-    result.data = queue->entries[index].usr_ptr;
-    result.is_valid = true;
-    COMPLETE_PAST_READS_BEFORE_FUTURE_READS;
+  int original_next_entry_to_do = queue->next_entry_to_do;
+  if (queue->next_entry_to_do < queue->entry_count) { // SDL_AtomicGet() perhaps
+    int entry_index = InterlockedCompareExchange(&queue->next_entry_to_do, original_next_entry_to_do + 1, original_next_entry_to_do);
+    if (entry_index == original_next_entry_to_do) { 
+      result.data = queue->entries[index].usr_ptr;
+      result.is_valid = true;
+      COMPLETE_PAST_READS_BEFORE_FUTURE_READS;
+      InterlockedIncrement(&queue->entry_completion_count);
+    } else {
+      // another thread beaten to increment
+    }
   }
   
   return result;
+}
+
+#define WORK_QUEUE_CALLBACK(name) void name(WorkQueue* queue, void* data)
+// can now do: INTERNAL WORK_QUEUE_CALLBACK(render_work) {}
+typedef void (*work_queue_callback)(WorkQueue* queue, void* data);
+
+void add_entry(WorkQueue* queue, work_queue_callback callback, void* data)
+{
+  WorkQueueEntry* entry = queue->entries[queue->entry_count];
+  entry->callback = callback;
+  entry->data = data;
+  WRITE_BARRIER;
+  ++queue->entry_count;
+  SDL_SemWait(queue->semaphore_handle);
 }
 
 INTERNAL bool queue_work_still_in_progress(WorkQueue* queue) // public
@@ -148,14 +126,10 @@ INTERNAL void thread_work(WorkQueueEntry* entry, int thread_index)
 INTERNAL int thread_function(void* thread_param)
 {
   ThreadInfo* thread_info = (ThreadInfo *)thread_param;
- 
-  WorkQueueEntry* entry;
+  
   while (true) {
-    entry = complete_and_get_next_work_queue_entry(queue, entry);
-    if (entry->is_valid) {
-        thread_work(entry, thread_info->thread_index);
-    } else {
-        SDL_SemWait(thread_info->semaphore_handle);
+    if (do_next_work_queue_entry(queue)) {
+      SDL_SemWait(thread_info->semaphore_handle);
     }
   }
   
