@@ -1,0 +1,35 @@
+==============
+appveyor --> windows
+travis ci --> mac
+teamcity --> linux
+circle ci --> android
+--> ios
+--> emscripten
+==============
+
+1. install jdk (with jre). /usr/lib/jvm/java-8-jdk --> /etc/profile
+export PATH=$JAVA_HOME/bin:$PATH
+
+2. install android sdk cmdline tools (from website)
+sdkmanager --list
+sdkmanager "build-tools;28.0.0" # necessary
+sdkmanager "cmake;3.6.4111459"
+sdkmanager "platforms;android-28" # necessary
+# sdkmanager "sources;android-28"
+sdkmanager "platform-tools" # necessary
+sdkmanager "patcher;v4"
+sdkmanager "tools"
+tools/sdkmanager --licenses
+export PATH=~/prog/c/cross-platform/android-ndk-r17b:$PATH
+export PATH=~/prog/c/cross-platform/platform-tools:$PATH
+export ANDROID_HOME=~/prog/c/cross-platform/tools/ 
+export ANDROID_NDK_HOME=~/prog/c/cross-platform/android-ndk-r17b/
+
+3. install android ndk (from website)
+5. download SDL2 source code (.zip from website)
+4. install gradle # perhaps not necessary through ./gradlew
+# sdl2 uses gradle3.3, so use jdk8
+./gradlew :SDL2:distributeLib
+
+
+
